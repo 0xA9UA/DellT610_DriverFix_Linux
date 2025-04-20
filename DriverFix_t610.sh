@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# fix_vm_net_t610.sh
+# DriverFix_t610.sh
 #
 # Fully idempotent script for Dell PowerEdge T610 running Debian 11/12.
 # It restores reliable VM networking for both KVM/libvirt and VirtualBox.
@@ -14,7 +14,7 @@
 #  • Enables IPv4 forwarding (immediate + persistent)
 #
 # Usage:
-#   sudo ./fix_vm_net_t610.sh [uplink_interface]
+#   sudo ./DriverFix_t610.sh [uplink_interface]
 #   # interface auto-detected if omitted
 
 set -euo pipefail
