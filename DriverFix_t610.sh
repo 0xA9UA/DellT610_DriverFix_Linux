@@ -194,7 +194,41 @@ else
 fi
 
 ###############################################################################
-# 8) enable IPv4 forwarding
+# 8) ensure stray routes cleaned at boot
+###############################################################################
+CLEAN_SCRIPT=/usr/local/sbin/cleanup-vnet-routes.sh
+if [[ ! -f $CLEAN_SCRIPT ]]; then
+  cat >"$CLEAN_SCRIPT" <<'EOF'
+#!/bin/bash
+for tap in $(ip -4 route | awk '/^default/ && / dev vnet/ {for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}'); do
+  ip route del default dev "$tap" || true
+done
+EOF
+  chmod +x "$CLEAN_SCRIPT"
+fi
+
+CLEAN_SERVICE=/etc/systemd/system/cleanup-vnet-routes.service
+if [[ ! -f $CLEAN_SERVICE ]]; then
+  cat >"$CLEAN_SERVICE" <<'EOF'
+[Unit]
+Description=Remove stray default routes on vnet* devices
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/cleanup-vnet-routes.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl daemon-reload
+  systemctl enable cleanup-vnet-routes.service
+fi
+systemctl start cleanup-vnet-routes.service
+
+###############################################################################
+# 9) enable IPv4 forwarding
 ###############################################################################
 if [[ $(sysctl -n net.ipv4.ip_forward) -eq 0 ]]; then
   sysctl -w net.ipv4.ip_forward=1
